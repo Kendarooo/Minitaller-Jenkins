@@ -7,8 +7,7 @@ pipeline {
   }
 
   environment {
-    TEST_CONTAINER    = "buscaminas-unit-test-${BUILD_NUMBER}"
-    GIT_COMMIT_SHORT  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
+    TEST_CONTAINER = "buscaminas-unit-test-${BUILD_NUMBER}"
   }
 
   stages {
@@ -33,6 +32,9 @@ pipeline {
       agent any
       steps {
         checkout scm
+        script {
+          env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
+        }
         stash(
           name: 'source-code',
           includes: '**/*',
@@ -135,11 +137,15 @@ pipeline {
 
   post {
     always {
-      sh '''
-        docker rmi -f buscaminas-ci-lint:${BUILD_NUMBER}  || true
-        docker rmi -f buscaminas-ci-test:${BUILD_NUMBER}  || true
-        docker rmi -f buscaminas-develop:${BUILD_NUMBER}  || true
-      '''
+      script {
+        node('') {
+          sh '''
+            docker rmi -f buscaminas-ci-lint:${BUILD_NUMBER}  || true
+            docker rmi -f buscaminas-ci-test:${BUILD_NUMBER}  || true
+            docker rmi -f buscaminas-develop:${BUILD_NUMBER}  || true
+          '''
+        }
+      }
     }
   }
 }
